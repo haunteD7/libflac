@@ -1,0 +1,3 @@
+C:/Users/User/Desktop/libflac/build/CMakeFiles/libflac.dir
+C:/Users/User/Desktop/libflac/build/CMakeFiles/edit_cache.dir
+C:/Users/User/Desktop/libflac/build/CMakeFiles/rebuild_cache.dir

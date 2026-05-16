@@ -1,0 +1,14 @@
+[
+{
+  "directory": "C:/Users/User/Desktop/libflac/build",
+  "command": "C:\\PROGRA~1\\mingw64\\bin\\G__~1.EXE  @CMakeFiles/libflac.dir/includes_CXX.rsp -g -std=c++26 -o CMakeFiles\\libflac.dir\\src\\bit_reader.cpp.obj -c C:\\Users\\User\\Desktop\\libflac\\src\\bit_reader.cpp",
+  "file": "C:/Users/User/Desktop/libflac/src/bit_reader.cpp",
+  "output": "CMakeFiles/libflac.dir/src/bit_reader.cpp.obj"
+},
+{
+  "directory": "C:/Users/User/Desktop/libflac/build",
+  "command": "C:\\PROGRA~1\\mingw64\\bin\\G__~1.EXE  @CMakeFiles/libflac.dir/includes_CXX.rsp -g -std=c++26 -o CMakeFiles\\libflac.dir\\src\\bit_writer.cpp.obj -c C:\\Users\\User\\Desktop\\libflac\\src\\bit_writer.cpp",
+  "file": "C:/Users/User/Desktop/libflac/src/bit_writer.cpp",
+  "output": "CMakeFiles/libflac.dir/src/bit_writer.cpp.obj"
+}
+]
