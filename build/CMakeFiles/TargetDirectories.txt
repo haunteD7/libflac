@@ -1,3 +1,6 @@
-C:/Users/User/Desktop/libflac/build/CMakeFiles/libflac.dir
-C:/Users/User/Desktop/libflac/build/CMakeFiles/edit_cache.dir
-C:/Users/User/Desktop/libflac/build/CMakeFiles/rebuild_cache.dir
+C:/Users/User/Desktop/flac/build/CMakeFiles/flac.dir
+C:/Users/User/Desktop/flac/build/CMakeFiles/edit_cache.dir
+C:/Users/User/Desktop/flac/build/CMakeFiles/rebuild_cache.dir
+C:/Users/User/Desktop/flac/build/libflac/CMakeFiles/libflac.dir
+C:/Users/User/Desktop/flac/build/libflac/CMakeFiles/edit_cache.dir
+C:/Users/User/Desktop/flac/build/libflac/CMakeFiles/rebuild_cache.dir

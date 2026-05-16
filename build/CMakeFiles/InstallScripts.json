@@ -1,7 +1,8 @@
 {
 	"InstallScripts" : 
 	[
-		"C:/Users/User/Desktop/libflac/build/cmake_install.cmake"
+		"C:/Users/User/Desktop/flac/build/cmake_install.cmake",
+		"C:/Users/User/Desktop/flac/build/libflac/cmake_install.cmake"
 	],
 	"Parallel" : false
 }

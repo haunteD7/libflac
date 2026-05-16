@@ -10,7 +10,9 @@ public:
     ~BitWriter();
 
     void write(uint64_t value, uint8_t num_bits);
+    void write_bit(bool bit);
     void flush();
+    size_t get_size() const { return byte_pos; }
 private:
     void push_byte(uint8_t byte);
 

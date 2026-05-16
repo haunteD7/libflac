@@ -39,11 +39,11 @@
 			[
 				{
 					"name" : "HELPSTRING",
-					"value" : "No help, variable specified on the command line."
+					"value" : "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel ..."
 				}
 			],
 			"type" : "STRING",
-			"value" : "Debug"
+			"value" : ""
 		},
 		{
 			"name" : "CMAKE_CACHEFILE_DIR",
@@ -55,7 +55,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "c:/Users/User/Desktop/libflac/build"
+			"value" : "c:/Users/User/Desktop/flac/build"
 		},
 		{
 			"name" : "CMAKE_CACHE_MAJOR_VERSION",
@@ -155,10 +155,10 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "No help, variable specified on the command line."
+					"value" : "CXX compiler"
 				}
 			],
-			"type" : "FILEPATH",
+			"type" : "STRING",
 			"value" : "C:/Program Files/mingw64/bin/g++.exe"
 		},
 		{
@@ -299,10 +299,10 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "No help, variable specified on the command line."
+					"value" : "C compiler"
 				}
 			],
-			"type" : "FILEPATH",
+			"type" : "STRING",
 			"value" : "C:/Program Files/mingw64/bin/gcc.exe"
 		},
 		{
@@ -554,18 +554,6 @@
 			"value" : ""
 		},
 		{
-			"name" : "CMAKE_EXPORT_COMPILE_COMMANDS",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "No help, variable specified on the command line."
-				}
-			],
-			"type" : "BOOL",
-			"value" : "TRUE"
-		},
-		{
 			"name" : "CMAKE_EXTRA_GENERATOR",
 			"properties" : 
 			[
@@ -587,7 +575,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "C:/Users/User/Desktop/libflac/build/CMakeFiles/pkgRedirects"
+			"value" : "C:/Users/User/Desktop/flac/build/CMakeFiles/pkgRedirects"
 		},
 		{
 			"name" : "CMAKE_GENERATOR",
@@ -659,7 +647,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "C:/Users/User/Desktop/libflac"
+			"value" : "C:/Users/User/Desktop/flac"
 		},
 		{
 			"name" : "CMAKE_INSTALL_PREFIX",
@@ -671,7 +659,7 @@
 				}
 			],
 			"type" : "PATH",
-			"value" : "C:/Program Files (x86)/libflac"
+			"value" : "C:/Program Files (x86)/convflac"
 		},
 		{
 			"name" : "CMAKE_LINKER",
@@ -823,7 +811,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "1"
+			"value" : "2"
 		},
 		{
 			"name" : "CMAKE_OBJCOPY",
@@ -915,7 +903,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "libflac"
+			"value" : "convflac"
 		},
 		{
 			"name" : "CMAKE_PROJECT_SPDX_LICENSE",
@@ -1322,7 +1310,7 @@
 			"value" : "FALSE"
 		},
 		{
-			"name" : "libflac_BINARY_DIR",
+			"name" : "convflac_BINARY_DIR",
 			"properties" : 
 			[
 				{
@@ -1331,10 +1319,10 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "C:/Users/User/Desktop/libflac/build"
+			"value" : "C:/Users/User/Desktop/flac/build"
 		},
 		{
-			"name" : "libflac_IS_TOP_LEVEL",
+			"name" : "convflac_IS_TOP_LEVEL",
 			"properties" : 
 			[
 				{
@@ -1346,6 +1334,42 @@
 			"value" : "ON"
 		},
 		{
+			"name" : "convflac_SOURCE_DIR",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : "C:/Users/User/Desktop/flac"
+		},
+		{
+			"name" : "libflac_BINARY_DIR",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : "C:/Users/User/Desktop/flac/build/libflac"
+		},
+		{
+			"name" : "libflac_IS_TOP_LEVEL",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : "OFF"
+		},
+		{
 			"name" : "libflac_SOURCE_DIR",
 			"properties" : 
 			[
@@ -1355,7 +1379,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "C:/Users/User/Desktop/libflac"
+			"value" : "C:/Users/User/Desktop/flac/libflac"
 		}
 	],
 	"kind" : "cache",

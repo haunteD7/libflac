@@ -86,21 +86,21 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start C:\Users\User\Desktop\flac\build\CMakeFiles C:\Users\User\Desktop\flac\build\\CMakeFiles\progress.marks
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 all
+	cd /d C:\Users\User\Desktop\flac\build && $(CMAKE_COMMAND) -E cmake_progress_start C:\Users\User\Desktop\flac\build\CMakeFiles C:\Users\User\Desktop\flac\build\libflac\\CMakeFiles\progress.marks
+	cd /d C:\Users\User\Desktop\flac\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 libflac/all
 	$(CMAKE_COMMAND) -E cmake_progress_start C:\Users\User\Desktop\flac\build\CMakeFiles 0
 .PHONY : all
 
 # The main codegen target
 codegen: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start C:\Users\User\Desktop\flac\build\CMakeFiles C:\Users\User\Desktop\flac\build\\CMakeFiles\progress.marks
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 codegen
+	cd /d C:\Users\User\Desktop\flac\build && $(CMAKE_COMMAND) -E cmake_progress_start C:\Users\User\Desktop\flac\build\CMakeFiles C:\Users\User\Desktop\flac\build\libflac\\CMakeFiles\progress.marks
+	cd /d C:\Users\User\Desktop\flac\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 libflac/codegen
 	$(CMAKE_COMMAND) -E cmake_progress_start C:\Users\User\Desktop\flac\build\CMakeFiles 0
 .PHONY : codegen
 
 # The main clean target
 clean:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 clean
+	cd /d C:\Users\User\Desktop\flac\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 libflac/clean
 .PHONY : clean
 
 # The main clean target
@@ -109,68 +109,80 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 preinstall
+	cd /d C:\Users\User\Desktop\flac\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 libflac/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 preinstall
+	cd /d C:\Users\User\Desktop\flac\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 libflac/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	$(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles\Makefile.cmake 1
+	cd /d C:\Users\User\Desktop\flac\build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles\Makefile.cmake 1
 .PHONY : depend
 
-#=============================================================================
-# Target rules for targets named flac
+# Convenience name for target.
+libflac/CMakeFiles/libflac.dir/rule:
+	cd /d C:\Users\User\Desktop\flac\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 libflac/CMakeFiles/libflac.dir/rule
+.PHONY : libflac/CMakeFiles/libflac.dir/rule
 
-# Build rule for target.
-flac: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 flac
-.PHONY : flac
-
-# fast build rule for target.
-flac/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\flac.dir\build.make CMakeFiles/flac.dir/build
-.PHONY : flac/fast
-
-#=============================================================================
-# Target rules for targets named libflac
-
-# Build rule for target.
-libflac: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 libflac
+# Convenience name for target.
+libflac: libflac/CMakeFiles/libflac.dir/rule
 .PHONY : libflac
 
 # fast build rule for target.
 libflac/fast:
-	$(MAKE) $(MAKESILENT) -f libflac\CMakeFiles\libflac.dir\build.make libflac/CMakeFiles/libflac.dir/build
+	cd /d C:\Users\User\Desktop\flac\build && $(MAKE) $(MAKESILENT) -f libflac\CMakeFiles\libflac.dir\build.make libflac/CMakeFiles/libflac.dir/build
 .PHONY : libflac/fast
 
-main.obj: main.cpp.obj
-.PHONY : main.obj
+src/bit_reader.obj: src/bit_reader.cpp.obj
+.PHONY : src/bit_reader.obj
 
 # target to build an object file
-main.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\flac.dir\build.make CMakeFiles/flac.dir/main.cpp.obj
-.PHONY : main.cpp.obj
+src/bit_reader.cpp.obj:
+	cd /d C:\Users\User\Desktop\flac\build && $(MAKE) $(MAKESILENT) -f libflac\CMakeFiles\libflac.dir\build.make libflac/CMakeFiles/libflac.dir/src/bit_reader.cpp.obj
+.PHONY : src/bit_reader.cpp.obj
 
-main.i: main.cpp.i
-.PHONY : main.i
+src/bit_reader.i: src/bit_reader.cpp.i
+.PHONY : src/bit_reader.i
 
 # target to preprocess a source file
-main.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\flac.dir\build.make CMakeFiles/flac.dir/main.cpp.i
-.PHONY : main.cpp.i
+src/bit_reader.cpp.i:
+	cd /d C:\Users\User\Desktop\flac\build && $(MAKE) $(MAKESILENT) -f libflac\CMakeFiles\libflac.dir\build.make libflac/CMakeFiles/libflac.dir/src/bit_reader.cpp.i
+.PHONY : src/bit_reader.cpp.i
 
-main.s: main.cpp.s
-.PHONY : main.s
+src/bit_reader.s: src/bit_reader.cpp.s
+.PHONY : src/bit_reader.s
 
 # target to generate assembly for a file
-main.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\flac.dir\build.make CMakeFiles/flac.dir/main.cpp.s
-.PHONY : main.cpp.s
+src/bit_reader.cpp.s:
+	cd /d C:\Users\User\Desktop\flac\build && $(MAKE) $(MAKESILENT) -f libflac\CMakeFiles\libflac.dir\build.make libflac/CMakeFiles/libflac.dir/src/bit_reader.cpp.s
+.PHONY : src/bit_reader.cpp.s
+
+src/bit_writer.obj: src/bit_writer.cpp.obj
+.PHONY : src/bit_writer.obj
+
+# target to build an object file
+src/bit_writer.cpp.obj:
+	cd /d C:\Users\User\Desktop\flac\build && $(MAKE) $(MAKESILENT) -f libflac\CMakeFiles\libflac.dir\build.make libflac/CMakeFiles/libflac.dir/src/bit_writer.cpp.obj
+.PHONY : src/bit_writer.cpp.obj
+
+src/bit_writer.i: src/bit_writer.cpp.i
+.PHONY : src/bit_writer.i
+
+# target to preprocess a source file
+src/bit_writer.cpp.i:
+	cd /d C:\Users\User\Desktop\flac\build && $(MAKE) $(MAKESILENT) -f libflac\CMakeFiles\libflac.dir\build.make libflac/CMakeFiles/libflac.dir/src/bit_writer.cpp.i
+.PHONY : src/bit_writer.cpp.i
+
+src/bit_writer.s: src/bit_writer.cpp.s
+.PHONY : src/bit_writer.s
+
+# target to generate assembly for a file
+src/bit_writer.cpp.s:
+	cd /d C:\Users\User\Desktop\flac\build && $(MAKE) $(MAKESILENT) -f libflac\CMakeFiles\libflac.dir\build.make libflac/CMakeFiles/libflac.dir/src/bit_writer.cpp.s
+.PHONY : src/bit_writer.cpp.s
 
 # Help Target
 help:
@@ -181,11 +193,13 @@ help:
 	@echo ... codegen
 	@echo ... edit_cache
 	@echo ... rebuild_cache
-	@echo ... flac
 	@echo ... libflac
-	@echo ... main.obj
-	@echo ... main.i
-	@echo ... main.s
+	@echo ... src/bit_reader.obj
+	@echo ... src/bit_reader.i
+	@echo ... src/bit_reader.s
+	@echo ... src/bit_writer.obj
+	@echo ... src/bit_writer.i
+	@echo ... src/bit_writer.s
 .PHONY : help
 
 
@@ -197,6 +211,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	$(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles\Makefile.cmake 0
+	cd /d C:\Users\User\Desktop\flac\build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles\Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

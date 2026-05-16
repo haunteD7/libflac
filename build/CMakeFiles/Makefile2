@@ -53,61 +53,115 @@ RM = "C:\Program Files\CMake\bin\cmake.exe" -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = C:\Users\User\Desktop\libflac
+CMAKE_SOURCE_DIR = C:\Users\User\Desktop\flac
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = C:\Users\User\Desktop\libflac\build
+CMAKE_BINARY_DIR = C:\Users\User\Desktop\flac\build
 
 #=============================================================================
 # Directory level rules for the build root directory
 
 # The main recursive "all" target.
-all: CMakeFiles/libflac.dir/all
+all: CMakeFiles/flac.dir/all
+all: libflac/all
 .PHONY : all
 
 # The main recursive "codegen" target.
-codegen: CMakeFiles/libflac.dir/codegen
+codegen: CMakeFiles/flac.dir/codegen
+codegen: libflac/codegen
 .PHONY : codegen
 
 # The main recursive "preinstall" target.
-preinstall:
+preinstall: libflac/preinstall
 .PHONY : preinstall
 
 # The main recursive "clean" target.
-clean: CMakeFiles/libflac.dir/clean
+clean: CMakeFiles/flac.dir/clean
+clean: libflac/clean
 .PHONY : clean
 
 #=============================================================================
-# Target rules for target CMakeFiles/libflac.dir
+# Directory level rules for directory libflac
+
+# Recursive "all" directory target.
+libflac/all: libflac/CMakeFiles/libflac.dir/all
+.PHONY : libflac/all
+
+# Recursive "codegen" directory target.
+libflac/codegen: libflac/CMakeFiles/libflac.dir/codegen
+.PHONY : libflac/codegen
+
+# Recursive "preinstall" directory target.
+libflac/preinstall:
+.PHONY : libflac/preinstall
+
+# Recursive "clean" directory target.
+libflac/clean: libflac/CMakeFiles/libflac.dir/clean
+.PHONY : libflac/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/flac.dir
 
 # All Build rule for target.
-CMakeFiles/libflac.dir/all:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\libflac.dir\build.make CMakeFiles/libflac.dir/depend
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\libflac.dir\build.make CMakeFiles/libflac.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=C:\Users\User\Desktop\libflac\build\CMakeFiles --progress-num=1,2,3 "Built target libflac"
-.PHONY : CMakeFiles/libflac.dir/all
+CMakeFiles/flac.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\flac.dir\build.make CMakeFiles/flac.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\flac.dir\build.make CMakeFiles/flac.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=C:\Users\User\Desktop\flac\build\CMakeFiles --progress-num=1,2 "Built target flac"
+.PHONY : CMakeFiles/flac.dir/all
 
 # Build rule for subdir invocation for target.
-CMakeFiles/libflac.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start C:\Users\User\Desktop\libflac\build\CMakeFiles 3
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 CMakeFiles/libflac.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start C:\Users\User\Desktop\libflac\build\CMakeFiles 0
-.PHONY : CMakeFiles/libflac.dir/rule
+CMakeFiles/flac.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start C:\Users\User\Desktop\flac\build\CMakeFiles 2
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 CMakeFiles/flac.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start C:\Users\User\Desktop\flac\build\CMakeFiles 0
+.PHONY : CMakeFiles/flac.dir/rule
 
 # Convenience name for target.
-libflac: CMakeFiles/libflac.dir/rule
+flac: CMakeFiles/flac.dir/rule
+.PHONY : flac
+
+# codegen rule for target.
+CMakeFiles/flac.dir/codegen:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\flac.dir\build.make CMakeFiles/flac.dir/codegen
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=C:\Users\User\Desktop\flac\build\CMakeFiles --progress-num=1,2 "Finished codegen for target flac"
+.PHONY : CMakeFiles/flac.dir/codegen
+
+# clean rule for target.
+CMakeFiles/flac.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\flac.dir\build.make CMakeFiles/flac.dir/clean
+.PHONY : CMakeFiles/flac.dir/clean
+
+#=============================================================================
+# Target rules for target libflac/CMakeFiles/libflac.dir
+
+# All Build rule for target.
+libflac/CMakeFiles/libflac.dir/all:
+	$(MAKE) $(MAKESILENT) -f libflac\CMakeFiles\libflac.dir\build.make libflac/CMakeFiles/libflac.dir/depend
+	$(MAKE) $(MAKESILENT) -f libflac\CMakeFiles\libflac.dir\build.make libflac/CMakeFiles/libflac.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=C:\Users\User\Desktop\flac\build\CMakeFiles --progress-num=3,4,5 "Built target libflac"
+.PHONY : libflac/CMakeFiles/libflac.dir/all
+
+# Build rule for subdir invocation for target.
+libflac/CMakeFiles/libflac.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start C:\Users\User\Desktop\flac\build\CMakeFiles 3
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 libflac/CMakeFiles/libflac.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start C:\Users\User\Desktop\flac\build\CMakeFiles 0
+.PHONY : libflac/CMakeFiles/libflac.dir/rule
+
+# Convenience name for target.
+libflac: libflac/CMakeFiles/libflac.dir/rule
 .PHONY : libflac
 
 # codegen rule for target.
-CMakeFiles/libflac.dir/codegen:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\libflac.dir\build.make CMakeFiles/libflac.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=C:\Users\User\Desktop\libflac\build\CMakeFiles --progress-num=1,2,3 "Finished codegen for target libflac"
-.PHONY : CMakeFiles/libflac.dir/codegen
+libflac/CMakeFiles/libflac.dir/codegen:
+	$(MAKE) $(MAKESILENT) -f libflac\CMakeFiles\libflac.dir\build.make libflac/CMakeFiles/libflac.dir/codegen
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=C:\Users\User\Desktop\flac\build\CMakeFiles --progress-num=3,4,5 "Finished codegen for target libflac"
+.PHONY : libflac/CMakeFiles/libflac.dir/codegen
 
 # clean rule for target.
-CMakeFiles/libflac.dir/clean:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\libflac.dir\build.make CMakeFiles/libflac.dir/clean
-.PHONY : CMakeFiles/libflac.dir/clean
+libflac/CMakeFiles/libflac.dir/clean:
+	$(MAKE) $(MAKESILENT) -f libflac\CMakeFiles\libflac.dir\build.make libflac/CMakeFiles/libflac.dir/clean
+.PHONY : libflac/CMakeFiles/libflac.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.
