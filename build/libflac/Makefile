@@ -184,6 +184,30 @@ src/bit_writer.cpp.s:
 	cd /d C:\Users\User\Desktop\flac\build && $(MAKE) $(MAKESILENT) -f libflac\CMakeFiles\libflac.dir\build.make libflac/CMakeFiles/libflac.dir/src/bit_writer.cpp.s
 .PHONY : src/bit_writer.cpp.s
 
+src/decoder.obj: src/decoder.cpp.obj
+.PHONY : src/decoder.obj
+
+# target to build an object file
+src/decoder.cpp.obj:
+	cd /d C:\Users\User\Desktop\flac\build && $(MAKE) $(MAKESILENT) -f libflac\CMakeFiles\libflac.dir\build.make libflac/CMakeFiles/libflac.dir/src/decoder.cpp.obj
+.PHONY : src/decoder.cpp.obj
+
+src/decoder.i: src/decoder.cpp.i
+.PHONY : src/decoder.i
+
+# target to preprocess a source file
+src/decoder.cpp.i:
+	cd /d C:\Users\User\Desktop\flac\build && $(MAKE) $(MAKESILENT) -f libflac\CMakeFiles\libflac.dir\build.make libflac/CMakeFiles/libflac.dir/src/decoder.cpp.i
+.PHONY : src/decoder.cpp.i
+
+src/decoder.s: src/decoder.cpp.s
+.PHONY : src/decoder.s
+
+# target to generate assembly for a file
+src/decoder.cpp.s:
+	cd /d C:\Users\User\Desktop\flac\build && $(MAKE) $(MAKESILENT) -f libflac\CMakeFiles\libflac.dir\build.make libflac/CMakeFiles/libflac.dir/src/decoder.cpp.s
+.PHONY : src/decoder.cpp.s
+
 # Help Target
 help:
 	@echo The following are some of the valid targets for this Makefile:
@@ -200,6 +224,9 @@ help:
 	@echo ... src/bit_writer.obj
 	@echo ... src/bit_writer.i
 	@echo ... src/bit_writer.s
+	@echo ... src/decoder.obj
+	@echo ... src/decoder.i
+	@echo ... src/decoder.s
 .PHONY : help
 
 

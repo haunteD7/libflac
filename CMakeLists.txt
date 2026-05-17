@@ -9,3 +9,6 @@ add_executable(flac
     main.cpp
 )
 add_subdirectory(libflac)
+target_link_libraries(flac 
+    libflac
+)

@@ -1,20 +1,26 @@
 [
 {
   "directory": "C:/Users/User/Desktop/flac/build",
-  "command": "C:\\PROGRA~1\\mingw64\\bin\\G__~1.EXE   -std=c++26 -o CMakeFiles\\flac.dir\\main.cpp.obj -c C:\\Users\\User\\Desktop\\flac\\main.cpp",
+  "command": "C:\\PROGRA~1\\mingw64\\bin\\G__~1.EXE  @CMakeFiles/flac.dir/includes_CXX.rsp -g -std=c++26 -o CMakeFiles\\flac.dir\\main.cpp.obj -c C:\\Users\\User\\Desktop\\flac\\main.cpp",
   "file": "C:/Users/User/Desktop/flac/main.cpp",
   "output": "CMakeFiles/flac.dir/main.cpp.obj"
 },
 {
   "directory": "C:/Users/User/Desktop/flac/build/libflac",
-  "command": "C:\\PROGRA~1\\mingw64\\bin\\G__~1.EXE  @CMakeFiles/libflac.dir/includes_CXX.rsp -std=c++26 -o CMakeFiles\\libflac.dir\\src\\bit_reader.cpp.obj -c C:\\Users\\User\\Desktop\\flac\\libflac\\src\\bit_reader.cpp",
+  "command": "C:\\PROGRA~1\\mingw64\\bin\\G__~1.EXE  @CMakeFiles/libflac.dir/includes_CXX.rsp -g -std=c++26 -o CMakeFiles\\libflac.dir\\src\\bit_reader.cpp.obj -c C:\\Users\\User\\Desktop\\flac\\libflac\\src\\bit_reader.cpp",
   "file": "C:/Users/User/Desktop/flac/libflac/src/bit_reader.cpp",
   "output": "libflac/CMakeFiles/libflac.dir/src/bit_reader.cpp.obj"
 },
 {
   "directory": "C:/Users/User/Desktop/flac/build/libflac",
-  "command": "C:\\PROGRA~1\\mingw64\\bin\\G__~1.EXE  @CMakeFiles/libflac.dir/includes_CXX.rsp -std=c++26 -o CMakeFiles\\libflac.dir\\src\\bit_writer.cpp.obj -c C:\\Users\\User\\Desktop\\flac\\libflac\\src\\bit_writer.cpp",
+  "command": "C:\\PROGRA~1\\mingw64\\bin\\G__~1.EXE  @CMakeFiles/libflac.dir/includes_CXX.rsp -g -std=c++26 -o CMakeFiles\\libflac.dir\\src\\bit_writer.cpp.obj -c C:\\Users\\User\\Desktop\\flac\\libflac\\src\\bit_writer.cpp",
   "file": "C:/Users/User/Desktop/flac/libflac/src/bit_writer.cpp",
   "output": "libflac/CMakeFiles/libflac.dir/src/bit_writer.cpp.obj"
+},
+{
+  "directory": "C:/Users/User/Desktop/flac/build/libflac",
+  "command": "C:\\PROGRA~1\\mingw64\\bin\\G__~1.EXE  @CMakeFiles/libflac.dir/includes_CXX.rsp -g -std=c++26 -o CMakeFiles\\libflac.dir\\src\\decoder.cpp.obj -c C:\\Users\\User\\Desktop\\flac\\libflac\\src\\decoder.cpp",
+  "file": "C:/Users/User/Desktop/flac/libflac/src/decoder.cpp",
+  "output": "libflac/CMakeFiles/libflac.dir/src/decoder.cpp.obj"
 }
 ]

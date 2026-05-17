@@ -101,19 +101,36 @@ libflac/CMakeFiles/libflac.dir/src/bit_writer.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/libflac.dir/src/bit_writer.cpp.s"
 	cd /d C:\Users\User\Desktop\flac\build\libflac && C:\PROGRA~1\mingw64\bin\G__~1.EXE $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S C:\Users\User\Desktop\flac\libflac\src\bit_writer.cpp -o CMakeFiles\libflac.dir\src\bit_writer.cpp.s
 
+libflac/CMakeFiles/libflac.dir/src/decoder.cpp.obj: libflac/CMakeFiles/libflac.dir/flags.make
+libflac/CMakeFiles/libflac.dir/src/decoder.cpp.obj: libflac/CMakeFiles/libflac.dir/includes_CXX.rsp
+libflac/CMakeFiles/libflac.dir/src/decoder.cpp.obj: C:/Users/User/Desktop/flac/libflac/src/decoder.cpp
+libflac/CMakeFiles/libflac.dir/src/decoder.cpp.obj: libflac/CMakeFiles/libflac.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=C:\Users\User\Desktop\flac\build\CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object libflac/CMakeFiles/libflac.dir/src/decoder.cpp.obj"
+	cd /d C:\Users\User\Desktop\flac\build\libflac && C:\PROGRA~1\mingw64\bin\G__~1.EXE $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT libflac/CMakeFiles/libflac.dir/src/decoder.cpp.obj -MF CMakeFiles\libflac.dir\src\decoder.cpp.obj.d -o CMakeFiles\libflac.dir\src\decoder.cpp.obj -c C:\Users\User\Desktop\flac\libflac\src\decoder.cpp
+
+libflac/CMakeFiles/libflac.dir/src/decoder.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/libflac.dir/src/decoder.cpp.i"
+	cd /d C:\Users\User\Desktop\flac\build\libflac && C:\PROGRA~1\mingw64\bin\G__~1.EXE $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E C:\Users\User\Desktop\flac\libflac\src\decoder.cpp > CMakeFiles\libflac.dir\src\decoder.cpp.i
+
+libflac/CMakeFiles/libflac.dir/src/decoder.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/libflac.dir/src/decoder.cpp.s"
+	cd /d C:\Users\User\Desktop\flac\build\libflac && C:\PROGRA~1\mingw64\bin\G__~1.EXE $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S C:\Users\User\Desktop\flac\libflac\src\decoder.cpp -o CMakeFiles\libflac.dir\src\decoder.cpp.s
+
 # Object files for target libflac
 libflac_OBJECTS = \
 "CMakeFiles/libflac.dir/src/bit_reader.cpp.obj" \
-"CMakeFiles/libflac.dir/src/bit_writer.cpp.obj"
+"CMakeFiles/libflac.dir/src/bit_writer.cpp.obj" \
+"CMakeFiles/libflac.dir/src/decoder.cpp.obj"
 
 # External object files for target libflac
 libflac_EXTERNAL_OBJECTS =
 
 libflac/liblibflac.a: libflac/CMakeFiles/libflac.dir/src/bit_reader.cpp.obj
 libflac/liblibflac.a: libflac/CMakeFiles/libflac.dir/src/bit_writer.cpp.obj
+libflac/liblibflac.a: libflac/CMakeFiles/libflac.dir/src/decoder.cpp.obj
 libflac/liblibflac.a: libflac/CMakeFiles/libflac.dir/build.make
 libflac/liblibflac.a: libflac/CMakeFiles/libflac.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=C:\Users\User\Desktop\flac\build\CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Linking CXX static library liblibflac.a"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=C:\Users\User\Desktop\flac\build\CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Linking CXX static library liblibflac.a"
 	cd /d C:\Users\User\Desktop\flac\build\libflac && $(CMAKE_COMMAND) -P CMakeFiles\libflac.dir\cmake_clean_target.cmake
 	cd /d C:\Users\User\Desktop\flac\build\libflac && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles\libflac.dir\link.txt --verbose=$(VERBOSE)
 

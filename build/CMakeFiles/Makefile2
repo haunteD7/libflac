@@ -103,7 +103,7 @@ libflac/clean: libflac/CMakeFiles/libflac.dir/clean
 # Target rules for target CMakeFiles/flac.dir
 
 # All Build rule for target.
-CMakeFiles/flac.dir/all:
+CMakeFiles/flac.dir/all: libflac/CMakeFiles/libflac.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\flac.dir\build.make CMakeFiles/flac.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\flac.dir\build.make CMakeFiles/flac.dir/build
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=C:\Users\User\Desktop\flac\build\CMakeFiles --progress-num=1,2 "Built target flac"
@@ -111,7 +111,7 @@ CMakeFiles/flac.dir/all:
 
 # Build rule for subdir invocation for target.
 CMakeFiles/flac.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start C:\Users\User\Desktop\flac\build\CMakeFiles 2
+	$(CMAKE_COMMAND) -E cmake_progress_start C:\Users\User\Desktop\flac\build\CMakeFiles 6
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 CMakeFiles/flac.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start C:\Users\User\Desktop\flac\build\CMakeFiles 0
 .PHONY : CMakeFiles/flac.dir/rule
@@ -138,12 +138,12 @@ CMakeFiles/flac.dir/clean:
 libflac/CMakeFiles/libflac.dir/all:
 	$(MAKE) $(MAKESILENT) -f libflac\CMakeFiles\libflac.dir\build.make libflac/CMakeFiles/libflac.dir/depend
 	$(MAKE) $(MAKESILENT) -f libflac\CMakeFiles\libflac.dir\build.make libflac/CMakeFiles/libflac.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=C:\Users\User\Desktop\flac\build\CMakeFiles --progress-num=3,4,5 "Built target libflac"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=C:\Users\User\Desktop\flac\build\CMakeFiles --progress-num=3,4,5,6 "Built target libflac"
 .PHONY : libflac/CMakeFiles/libflac.dir/all
 
 # Build rule for subdir invocation for target.
 libflac/CMakeFiles/libflac.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start C:\Users\User\Desktop\flac\build\CMakeFiles 3
+	$(CMAKE_COMMAND) -E cmake_progress_start C:\Users\User\Desktop\flac\build\CMakeFiles 4
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 libflac/CMakeFiles/libflac.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start C:\Users\User\Desktop\flac\build\CMakeFiles 0
 .PHONY : libflac/CMakeFiles/libflac.dir/rule
@@ -155,7 +155,7 @@ libflac: libflac/CMakeFiles/libflac.dir/rule
 # codegen rule for target.
 libflac/CMakeFiles/libflac.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f libflac\CMakeFiles\libflac.dir\build.make libflac/CMakeFiles/libflac.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=C:\Users\User\Desktop\flac\build\CMakeFiles --progress-num=3,4,5 "Finished codegen for target libflac"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=C:\Users\User\Desktop\flac\build\CMakeFiles --progress-num=3,4,5,6 "Finished codegen for target libflac"
 .PHONY : libflac/CMakeFiles/libflac.dir/codegen
 
 # clean rule for target.

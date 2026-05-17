@@ -8,5 +8,6 @@ project(libflac)
 add_library(libflac
     src/bit_reader.cpp
     src/bit_writer.cpp
+    src/decoder.cpp
 )
 target_include_directories(libflac PUBLIC include)

@@ -72,6 +72,7 @@ CMakeFiles/flac.dir/codegen:
 .PHONY : CMakeFiles/flac.dir/codegen
 
 CMakeFiles/flac.dir/main.cpp.obj: CMakeFiles/flac.dir/flags.make
+CMakeFiles/flac.dir/main.cpp.obj: CMakeFiles/flac.dir/includes_CXX.rsp
 CMakeFiles/flac.dir/main.cpp.obj: C:/Users/User/Desktop/flac/main.cpp
 CMakeFiles/flac.dir/main.cpp.obj: CMakeFiles/flac.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=C:\Users\User\Desktop\flac\build\CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/flac.dir/main.cpp.obj"
@@ -94,6 +95,7 @@ flac_EXTERNAL_OBJECTS =
 
 flac.exe: CMakeFiles/flac.dir/main.cpp.obj
 flac.exe: CMakeFiles/flac.dir/build.make
+flac.exe: libflac/liblibflac.a
 flac.exe: CMakeFiles/flac.dir/linkLibs.rsp
 flac.exe: CMakeFiles/flac.dir/objects1.rsp
 flac.exe: CMakeFiles/flac.dir/link.txt

@@ -10,6 +10,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "C:/Users/User/Desktop/flac/libflac/src/bit_reader.cpp" "libflac/CMakeFiles/libflac.dir/src/bit_reader.cpp.obj" "gcc" "libflac/CMakeFiles/libflac.dir/src/bit_reader.cpp.obj.d"
   "C:/Users/User/Desktop/flac/libflac/src/bit_writer.cpp" "libflac/CMakeFiles/libflac.dir/src/bit_writer.cpp.obj" "gcc" "libflac/CMakeFiles/libflac.dir/src/bit_writer.cpp.obj.d"
+  "C:/Users/User/Desktop/flac/libflac/src/decoder.cpp" "libflac/CMakeFiles/libflac.dir/src/decoder.cpp.obj" "gcc" "libflac/CMakeFiles/libflac.dir/src/decoder.cpp.obj.d"
   )
 
 # Targets to which this target links which contain Fortran sources.
