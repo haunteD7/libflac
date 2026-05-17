@@ -1,2 +1,0 @@
-C:\PROGRA~1\mingw64\bin\ar.exe qc liblibflac.a CMakeFiles/libflac.dir/src/bit_reader.cpp.obj CMakeFiles/libflac.dir/src/bit_writer.cpp.obj CMakeFiles/libflac.dir/src/decoder.cpp.obj
-C:\PROGRA~1\mingw64\bin\ranlib.exe liblibflac.a
