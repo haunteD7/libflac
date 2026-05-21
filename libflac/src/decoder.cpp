@@ -1,4 +1,5 @@
 #include <decoder.h>
+#include <utils.h>
 
 #include <vector>
 #include <iostream>
@@ -10,7 +11,7 @@ size_t FlacDecoder::decode(std::filesystem::path path)
     std::ifstream f(path, std::ios::binary);
     if (!f.is_open())
     {
-        std::cerr << "Can't open file" << path.filename() << "for reading\n";
+        throw std::runtime_error("Can't open file " + path.filename().string() + " for reading");
         return 0;
     }
 
@@ -42,7 +43,7 @@ size_t FlacDecoder::decode(std::filesystem::path path)
             magic[3] = br.read8();
             if (std::strncmp(reinterpret_cast<const char *>(magic), "fLaC", 4))
             {
-                throw std::runtime_error("File " + path.filename().string() + " is damaged\n");
+                throw std::runtime_error("Not a FLAC file");
                 return 0;
             }
             state = State::Metadata;
@@ -52,15 +53,6 @@ size_t FlacDecoder::decode(std::filesystem::path path)
     }
 
     return bw.get_bytes_written();
-}
-static int32_t sign_extend(uint64_t value, uint8_t bits)
-{
-    uint64_t sign_bit = uint64_t(1) << (bits - 1);
-    return int32_t((value ^ sign_bit) - sign_bit);
-}
-static inline int32_t zigzag_decode(uint32_t u)
-{
-    return static_cast<int32_t>((u >> 1) ^ -(u & 1));
 }
 
 int32_t FlacDecoder::decode_rice_sample(uint8_t k)
@@ -127,21 +119,21 @@ void FlacDecoder::decode_residual(uint8_t warmups, uint32_t block_size, std::spa
         offset += num_samples;
     }
 }
-void FlacDecoder::parse_subframe_constant(uint8_t channel, uint32_t block_size, uint8_t bps)
+void FlacDecoder::decode_subframe_constant(uint8_t channel, uint32_t block_size, uint8_t bps)
 {
     int32_t sample = sign_extend(br.read(bps), bps);
 
     for (uint32_t i = 0; i < block_size; i++)
         frame_pcm[channel][i] = sample;
 }
-void FlacDecoder::parse_subframe_verbatim(uint8_t channel, uint32_t block_size, uint8_t bps)
+void FlacDecoder::decode_subframe_verbatim(uint8_t channel, uint32_t block_size, uint8_t bps)
 {
     for (uint32_t i = 0; i < block_size; i++)
     {
         frame_pcm[channel][i] = sign_extend(br.read(bps), bps);
     }
 }
-void FlacDecoder::parse_subframe_fp(uint8_t channel, uint8_t bps, uint32_t block_size, uint8_t type)
+void FlacDecoder::decode_subframe_fp(uint8_t channel, uint8_t bps, uint32_t block_size, uint8_t type)
 {
     for (uint8_t i = 0; i < type; i++) // Warmup
         frame_pcm[channel][i] = sign_extend(br.read(bps), bps);
@@ -182,7 +174,7 @@ void FlacDecoder::parse_subframe_fp(uint8_t channel, uint8_t bps, uint32_t block
         frame_pcm[channel][i] += predicted;
     }
 }
-void FlacDecoder::parse_subframe_lp(uint8_t channel, uint8_t bps, uint32_t block_size, uint8_t type)
+void FlacDecoder::decode_subframe_lp(uint8_t channel, uint8_t bps, uint32_t block_size, uint8_t type)
 {
     for (uint8_t i = 0; i < type; i++) // Warmup
         frame_pcm[channel][i] = sign_extend(br.read(bps), bps);
@@ -228,13 +220,13 @@ void FlacDecoder::parse_subframe(uint8_t channel, uint32_t block_size, uint8_t b
         bps -= wasted_bits;
     }
     if (type == 0)
-        parse_subframe_constant(channel, block_size, bps);
+        decode_subframe_constant(channel, block_size, bps);
     else if (type == 1)
-        parse_subframe_verbatim(channel, block_size, bps);
+        decode_subframe_verbatim(channel, block_size, bps);
     else if (type >= 8 && type <= 12)
-        parse_subframe_fp(channel, bps, block_size, type - 8);
+        decode_subframe_fp(channel, bps, block_size, type - 8);
     else if (type >= 32)
-        parse_subframe_lp(channel, bps, block_size, type - 31);
+        decode_subframe_lp(channel, bps, block_size, type - 31);
     else
         throw std::runtime_error("Invalid subframe type");
 
@@ -401,8 +393,6 @@ uint8_t FlacDecoder::decode_bps(uint8_t code)
 }
 void FlacDecoder::parse_frame()
 {
-    state = State::Frame;
-
     uint16_t sync = br.read16_be();
     if ((sync & 0xFFFE) != 0xFFF8)
         throw std::runtime_error("Invalid frame sync code");
@@ -428,7 +418,7 @@ void FlacDecoder::parse_frame()
         ch.resize(block_size);
     }
 
-    for (int ch = 0; ch < num_channels; ch++)
+    for (int ch = 0; ch < num_channels; ch++) // Subframe parsing loop
     {
         uint8_t ch_bps_actual = bps;
         if ((ch_assignment == 8 && ch == 1) || // side
@@ -439,7 +429,7 @@ void FlacDecoder::parse_frame()
         parse_subframe(ch, block_size, ch_bps_actual);
     }
 
-    // Channel decorrelation
+    // Channel correlation
     if (ch_assignment == 8) // left/side: left=ch0, side=ch1
     {
         for (uint32_t i = 0; i < block_size; i++)
@@ -483,13 +473,13 @@ void FlacDecoder::parse_metadata()
             throw std::runtime_error("Invalid streaminfo metadata block size");
             break;
         }
-        stream_info.max_block_size = br.read16_be(); // 16 bits
         stream_info.min_block_size = br.read16_be(); // 16 bits
+        stream_info.max_block_size = br.read16_be(); // 16 bits
         stream_info.min_frame_size = br.read24_be(); // 24 bits
         stream_info.max_frame_size = br.read24_be(); // 24 bits
         uint64_t packed = br.read64_be();
         stream_info.sample_rate = (packed >> 44) & 0xFFFFF;        // 20 bits
-        stream_info.num_of_channels = ((packed >> 41) & 0x7) + 1;  // 3 bits
+        stream_info.num_channels = ((packed >> 41) & 0x7) + 1;  // 3 bits
         stream_info.bits_per_sample = ((packed >> 36) & 0x1F) + 1; // 5 bits
         stream_info.total_samples = ((packed) & 0xFFFFFFFFF);      // 36 bits
 
@@ -539,12 +529,12 @@ void FlacDecoder::flush_frame(uint32_t block_size, uint8_t num_channels, uint8_t
 void FlacDecoder::write_wav_header()
 {
     const uint32_t data_size    = stream_info.total_samples
-                                * stream_info.num_of_channels
+                                * stream_info.num_channels
                                 * (stream_info.bits_per_sample / 8);
     const uint32_t byte_rate    = stream_info.sample_rate
-                                * stream_info.num_of_channels
+                                * stream_info.num_channels
                                 * (stream_info.bits_per_sample / 8);
-    const uint16_t block_align  = stream_info.num_of_channels
+    const uint16_t block_align  = stream_info.num_channels
                                 * (stream_info.bits_per_sample / 8);
 
     // RIFF chunk
@@ -559,7 +549,7 @@ void FlacDecoder::write_wav_header()
     bw.write8('t'); bw.write8(' ');
     bw.write32_le(16);                                  // chunk size
     bw.write16_le(1);                                   // PCM
-    bw.write16_le(stream_info.num_of_channels);
+    bw.write16_le(stream_info.num_channels);
     bw.write32_le(stream_info.sample_rate);
     bw.write32_le(byte_rate);
     bw.write16_le(block_align);

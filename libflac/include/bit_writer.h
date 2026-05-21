@@ -6,6 +6,7 @@
 class BitWriter
 {
 public:
+    BitWriter() noexcept : buffer(std::span<uint8_t>()) {}
     explicit BitWriter(std::span<uint8_t> buf) noexcept
         : buffer(buf) {}
 
