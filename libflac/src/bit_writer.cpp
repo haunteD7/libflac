@@ -85,7 +85,6 @@ void BitWriter::flush()
 
     // Zero-pad to a full byte and emit
     align_to_byte();
-    drain();
 }
 
 // Aligned multi-byte helpers 

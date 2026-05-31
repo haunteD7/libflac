@@ -10,8 +10,8 @@ namespace fs = std::filesystem;
 int main(int argc, char *argv[])
 {
 #ifndef NDEBUG
-    fs::path f_in = "in.wav";
-    fs::path f_out = "out.flac";
+    fs::path f_in = "out.flac";
+    fs::path f_out = "c.wav";
 #else
     if(argc < 3) 
     {

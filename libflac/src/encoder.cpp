@@ -1,4 +1,5 @@
 #include <encoder.h>
+#include <crc.h>
 
 #include <fstream>
 #include <cstring>
@@ -170,9 +171,7 @@ size_t FlacEncoder::encode(std::filesystem::path path, uint32_t block_size)
     // WAV Header + FLAC
     read_wav_header();
     stream_info.max_block_size = block_size;
-    size_t tail = stream_info.total_samples % block_size;
-    stream_info.min_block_size =
-        tail == 0 ? block_size : std::min((uint64_t)block_size, tail);
+    stream_info.min_block_size = block_size;
     write_flac_header_and_metadata();
     deinterleave();
 
@@ -271,7 +270,11 @@ size_t FlacEncoder::encode(std::filesystem::path path, uint32_t block_size)
         }
 
         bw.align_to_byte();
-        bw.write16_be(0); // TODO: CRC16
+        
+        size_t frame_len = bw.get_bytes_written() - frame_header_start;
+        uint16_t c16 = crc16({bw.data_at(frame_header_start), frame_len});
+        bw.write16_be(c16);
+        
         offset += num_samples;
     }
 
@@ -555,38 +558,32 @@ void FlacEncoder::write_subframe_header(PredictorType pred_type, uint8_t pred_or
 }
 void FlacEncoder::write_frame_header(size_t num_samples, ChannelDecorrelationType dec_type)
 {
-    bw.write16_be(0xFFF8); // Sync code
-    bw.write8(encode_block_size_and_sample_rate(num_samples, stream_info.sample_rate));
+    frame_header_start = bw.get_bytes_written();
+    bw.write16_be(0xFFF8); // fixed blocksize stream
+
+    bw.write8(encode_block_size_and_sample_rate(stream_info.max_block_size, stream_info.sample_rate));
 
     uint8_t channel_assignment;
     switch (dec_type)
     {
     case ChannelDecorrelationType::Independent:
-        channel_assignment = stream_info.num_channels - 1;
-        break;
+        channel_assignment = stream_info.num_channels - 1; break;
     case ChannelDecorrelationType::LeftSide:
-        channel_assignment = 8; // Left/side stereo
-        break;
+        channel_assignment = 8; break;
     case ChannelDecorrelationType::RightSide:
-        channel_assignment = 9; // Right/side stereo
-        break;
+        channel_assignment = 9; break;
     case ChannelDecorrelationType::MidSide:
-        channel_assignment = 10; // Mid/side stereo
-        break;
+        channel_assignment = 10; break;
     default:
         throw std::runtime_error("Invalid channel decorrelation type");
     }
     bw.write8(encode_channels_and_bit_depth(channel_assignment, stream_info.bits_per_sample));
-    if (num_samples != stream_info.max_block_size) // Uncommon block size
-    {
-        write_utf8_coded_int(stream_info.total_samples - num_samples); // Write sample shift
-        bw.write16_be(num_samples - 1);                                // Write uncommon size
-    }
-    else
-    {
-        write_utf8_coded_int(frame_number);
-    }
-    bw.write8(0); // TODO: This should be CRC8
+
+    write_utf8_coded_int(frame_number); 
+
+    size_t header_len = bw.get_bytes_written() - frame_header_start;
+    uint8_t c8 = crc8({bw.data_at(frame_header_start), header_len});
+    bw.write8(c8);
     frame_number++;
 }
 

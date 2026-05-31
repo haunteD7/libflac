@@ -16,10 +16,10 @@ public:
     /// Write a single bit.
     void write_bit(bool bit);
 
-    // Byte-aligned multi-byte writes 
+    // Byte-aligned multi-byte writes
     // All of these flush any sub-byte remainder first (align_to_byte).
 
-    void write8  (uint8_t  value);
+    void write8(uint8_t value);
     void write16_be(uint16_t value);
     void write16_le(uint16_t value);
     void write24_be(uint32_t value);
@@ -29,14 +29,15 @@ public:
     void write64_be(uint64_t value);
     void write64_le(uint64_t value);
 
-    // Alignment / state 
+    // Alignment / state
 
     /// Pad with zero bits until the writer is on a byte boundary.
-    void align_to_byte() noexcept
+    void align_to_byte()
     {
         size_t remainder = bits_in_buf % 8;
         if (remainder)
-            bits_in_buf += 8 - remainder; // zero-pad: high bits of bit_buf are 0
+            bits_in_buf += 8 - remainder;
+        drain();
     }
 
     /// Flush any buffered bits (zero-padded to a full byte) to the output.
@@ -45,13 +46,11 @@ public:
     /// Reset to a new buffer, discarding all internal state.
     void set_buffer(std::span<uint8_t> buf) noexcept
     {
-        buffer     = buf;
-        byte_pos   = 0;
-        bit_buf    = 0;
+        buffer = buf;
+        byte_pos = 0;
+        bit_buf = 0;
         bits_in_buf = 0;
     }
-
-    // Introspection 
 
     /// Total capacity of the output buffer in bytes.
     [[nodiscard]] size_t get_buffer_size() const noexcept { return buffer.size(); }
@@ -73,14 +72,18 @@ public:
     {
         return buffer.size() - get_bytes_written();
     }
+    [[nodiscard]] const uint8_t *data_at(size_t byte_pos) const noexcept
+    {
+        return buffer.data() + byte_pos;
+    }
 
     [[nodiscard]] bool full() const noexcept { return get_bytes_remaining() == 0; }
 
 private:
     std::span<uint8_t> buffer;
-    size_t   byte_pos    = 0;
-    uint64_t bit_buf     = 0;
-    size_t   bits_in_buf = 0;
+    size_t byte_pos = 0;
+    uint64_t bit_buf = 0;
+    size_t bits_in_buf = 0;
 
     // Drain all complete bytes from bit_buf to the output.
     void drain();

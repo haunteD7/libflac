@@ -47,4 +47,5 @@ private:
 
     StreamInfo stream_info;
     State state = State::Header;
+    uint64_t decoded_samples = 0;
 };

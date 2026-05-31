@@ -86,4 +86,5 @@ private:
     std::array<std::array<int32_t, MAX_SAMPLES_IN_BLOCK>, static_cast<size_t>(ChannelDecorrelationType::Count)> dec_right;
 
     uint64_t frame_number = 0;
+    size_t frame_header_start = 0;
 };

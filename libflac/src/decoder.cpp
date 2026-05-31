@@ -20,7 +20,7 @@ size_t FlacDecoder::decode(std::filesystem::path path)
     br = BitReader(br_buffer);
     f.read(reinterpret_cast<char *>(br_buffer.data()), file_size);
 
-    while (br.get_available_bits() > 0)
+    while (state != State::Frame || decoded_samples < stream_info.total_samples)
     {
         switch (state)
         {
@@ -404,6 +404,7 @@ void FlacDecoder::parse_frame()
     uint64_t frame_number = read_utf8_coded_int();
 
     uint32_t block_size = decode_block_size(bs_sr >> 4);
+    block_size = std::min(block_size, (uint32_t)(stream_info.total_samples - decoded_samples));
     uint32_t sample_rate = decode_sample_rate(bs_sr & 0xF);
 
     uint8_t crc = br.read8();
@@ -463,7 +464,7 @@ void FlacDecoder::parse_metadata()
     bool is_last = block_type >> 7;
     block_type &= 0x7F;
     uint32_t block_size = br.read24_be();
-    
+
     switch (block_type)
     {
     case 0: // Streaminfo
@@ -479,7 +480,7 @@ void FlacDecoder::parse_metadata()
         stream_info.max_frame_size = br.read24_be(); // 24 bits
         uint64_t packed = br.read64_be();
         stream_info.sample_rate = (packed >> 44) & 0xFFFFF;        // 20 bits
-        stream_info.num_channels = ((packed >> 41) & 0x7) + 1;  // 3 bits
+        stream_info.num_channels = ((packed >> 41) & 0x7) + 1;     // 3 bits
         stream_info.bits_per_sample = ((packed >> 36) & 0x1F) + 1; // 5 bits
         stream_info.total_samples = ((packed) & 0xFFFFFFFFF);      // 36 bits
 
@@ -506,6 +507,9 @@ void FlacDecoder::parse_metadata()
 }
 void FlacDecoder::flush_frame(uint32_t block_size, uint8_t num_channels, uint8_t bps)
 {
+    if (stream_info.total_samples != 0 && decoded_samples >= stream_info.total_samples)
+        return;
+
     const uint8_t bytes_per_sample = (bps + 7) / 8;
     const size_t needed = block_size * num_channels * bytes_per_sample;
 
@@ -525,30 +529,32 @@ void FlacDecoder::flush_frame(uint32_t block_size, uint8_t num_channels, uint8_t
             }
         }
     }
+    decoded_samples += block_size;
 }
 void FlacDecoder::write_wav_header()
 {
-    const uint32_t data_size    = stream_info.total_samples
-                                * stream_info.num_channels
-                                * (stream_info.bits_per_sample / 8);
-    const uint32_t byte_rate    = stream_info.sample_rate
-                                * stream_info.num_channels
-                                * (stream_info.bits_per_sample / 8);
-    const uint16_t block_align  = stream_info.num_channels
-                                * (stream_info.bits_per_sample / 8);
+    const uint32_t data_size = stream_info.total_samples * stream_info.num_channels * (stream_info.bits_per_sample / 8);
+    const uint32_t byte_rate = stream_info.sample_rate * stream_info.num_channels * (stream_info.bits_per_sample / 8);
+    const uint16_t block_align = stream_info.num_channels * (stream_info.bits_per_sample / 8);
 
     // RIFF chunk
-    bw.write8('R'); bw.write8('I');
-    bw.write8('F'); bw.write8('F');
+    bw.write8('R');
+    bw.write8('I');
+    bw.write8('F');
+    bw.write8('F');
     bw.write32_le(36 + data_size);
-    bw.write8('W'); bw.write8('A');
-    bw.write8('V'); bw.write8('E');
+    bw.write8('W');
+    bw.write8('A');
+    bw.write8('V');
+    bw.write8('E');
 
     // fmt chunk
-    bw.write8('f'); bw.write8('m');
-    bw.write8('t'); bw.write8(' ');
-    bw.write32_le(16);                                  // chunk size
-    bw.write16_le(1);                                   // PCM
+    bw.write8('f');
+    bw.write8('m');
+    bw.write8('t');
+    bw.write8(' ');
+    bw.write32_le(16); // chunk size
+    bw.write16_le(1);  // PCM
     bw.write16_le(stream_info.num_channels);
     bw.write32_le(stream_info.sample_rate);
     bw.write32_le(byte_rate);
@@ -556,7 +562,9 @@ void FlacDecoder::write_wav_header()
     bw.write16_le(stream_info.bits_per_sample);
 
     // data chunk header
-    bw.write8('d'); bw.write8('a');
-    bw.write8('t'); bw.write8('a');
+    bw.write8('d');
+    bw.write8('a');
+    bw.write8('t');
+    bw.write8('a');
     bw.write32_le(data_size);
 }

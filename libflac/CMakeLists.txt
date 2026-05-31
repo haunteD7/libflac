@@ -11,4 +11,5 @@ add_library(libflac
     src/encoder.cpp
     src/decoder.cpp
 )
+target_include_directories(libflac PRIVATE src)
 target_include_directories(libflac PUBLIC include)
