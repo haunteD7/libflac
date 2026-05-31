@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
     {
         if(f_in.extension() == ".wav")
         {
-            std::vector<uint8_t> out(4 * fs::file_size(f_in));
+            std::vector<uint8_t> out(2 * fs::file_size(f_in));
             FlacEncoder f(out);
             size_t final_size = f.encode(f_in, 4096);
             std::ofstream of(f_out, std::ios::binary);

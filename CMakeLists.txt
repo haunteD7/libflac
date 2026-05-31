@@ -12,7 +12,13 @@ project(convflac)
 add_executable(flac
     main.cpp
 )
+add_executable(benchmark
+    benchmark.cpp
+)
 add_subdirectory(libflac)
 target_link_libraries(flac 
+    libflac
+)
+target_link_libraries(benchmark 
     libflac
 )
