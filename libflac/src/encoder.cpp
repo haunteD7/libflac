@@ -3,6 +3,7 @@
 #include <fstream>
 #include <cstring>
 #include <cmath>
+#include <numbers>
 
 FlacEncoder::BestEncoding FlacEncoder::find_best(std::span<const int32_t> samples, uint8_t bps)
 {
@@ -107,6 +108,11 @@ FlacEncoder::BestEncoding FlacEncoder::find_best(std::span<const int32_t> sample
             encode_fp(samples, residual_buf, order);
             try_predictor(PredictorType::Fixed, order, residual_buf, dummy_qlp);
         }
+        if (best.type == PredictorType::Fixed &&
+            best.bits < (size_t)(0.5 * bps * n))
+        {
+            return best; // skip whole LPC
+        }
     }
 
     // 4. LPC, orders 1..min(MAX_LPC_ORDER, n-1)
@@ -114,6 +120,9 @@ FlacEncoder::BestEncoding FlacEncoder::find_best(std::span<const int32_t> sample
     {
         // Single autocorrelation for all orders
         std::array<double, MAX_LPC_ORDER + 1> r{};
+        std::array<double, MAX_SAMPLES_IN_BLOCK> windowed;
+        for (size_t i = 0; i < n; i++)
+            windowed[i] = samples[i] * (0.5 - 0.5 * std::cos(2 * std::numbers::pi * i / (n - 1)));
         compute_autocorrelation(samples, r, MAX_ORDER);
 
         if (r[0] > 0.0)
@@ -187,14 +196,6 @@ size_t FlacEncoder::encode(std::filesystem::path path, uint32_t block_size)
         const size_t num_samples = std::min(
             static_cast<uint64_t>(block_size),
             stream_info.total_samples - offset);
-
-        // Buffers for decorrelated channels (each variant)
-        std::array<std::array<int32_t, MAX_SAMPLES_IN_BLOCK>,
-                   static_cast<size_t>(ChannelDecorrelationType::Count)>
-            dec_left{};
-        std::array<std::array<int32_t, MAX_SAMPLES_IN_BLOCK>,
-                   static_cast<size_t>(ChannelDecorrelationType::Count)>
-            dec_right{};
 
         // Source data spans for current block
         std::span<const int32_t> src_left(channels[0].data() + offset, num_samples);
@@ -784,8 +785,8 @@ void FlacEncoder::decorrelate(std::span<const int32_t> in_left, std::span<const 
     }
     case ChannelDecorrelationType::MidSide:
     {
-        // out_left = left - right
-        // out_right = (left + right) / 2
+        // out_left = (left + right) / 2
+        // out_right = left - right
 
         for (size_t i = 0; i < in_left.size(); i++)
         {
@@ -875,40 +876,45 @@ void FlacEncoder::encode_lp(std::span<const int32_t> in, std::span<int32_t> out,
 }
 void FlacEncoder::compute_autocorrelation(std::span<const int32_t> samples, std::span<double> r, uint8_t order)
 {
+    // One-time conversion - double*double then
+    static thread_local std::array<double, MAX_SAMPLES_IN_BLOCK> s;
+    const size_t n = samples.size();
+    for (size_t i = 0; i < n; i++)
+        s[i] = samples[i];
+
     for (size_t lag = 0; lag <= order; lag++)
     {
         double sum = 0.0;
-
-        for (size_t i = lag; i < samples.size(); i++)
-            sum += static_cast<double>(samples[i]) * samples[i - lag];
-
+        // Makes compiler use AVX with -O2 and -O3
+        const double *a = s.data() + lag;
+        const double *b = s.data();
+        //
+        const size_t len = n - lag;
+        for (size_t i = 0; i < len; i++)
+            sum += a[i] * b[i];
         r[lag] = sum;
     }
 }
-void FlacEncoder::levinson_durbin(std::span<const double> r, std::span<double> a, uint8_t order)
+void FlacEncoder::levinson_durbin(std::span<const double> r,
+                                  std::span<double> a, uint8_t order)
 {
-    std::array<double, MAX_LPC_ORDER> prev{};
-
+    static thread_local std::array<double, MAX_LPC_ORDER> tmp;
     double error = r[0];
 
     for (size_t i = 0; i < order; i++)
     {
         double lambda = r[i + 1];
-
         for (size_t j = 0; j < i; j++)
-            lambda -= prev[j] * r[i - j];
-
+            lambda -= a[j] * r[i - j];
         lambda /= error;
 
-        a[i] = lambda;
-
         for (size_t j = 0; j < i; j++)
-            a[j] = prev[j] - lambda * prev[i - j - 1];
+            tmp[j] = a[j] - lambda * a[i - j - 1];
+        for (size_t j = 0; j < i; j++)
+            a[j] = tmp[j];
 
+        a[i] = lambda;
         error *= (1.0 - lambda * lambda);
-
-        for (size_t j = 0; j <= i; j++)
-            prev[j] = a[j];
     }
 }
 void FlacEncoder::quantize_lpc(std::span<const double> lpc, std::span<int32_t> qlp, uint8_t shift)
@@ -926,14 +932,12 @@ void FlacEncoder::write_rice_sample(int32_t sample, uint8_t k)
     uint32_t r = u & ((1u << k) - 1u);
 
     // unary quotient
-    // while (q)
-    // {
-    //     uint32_t chunk = std::min(q, 64u);
-    //     bw.write(0, chunk);
-    //     q -= chunk;
-    // }
-    for (uint32_t i = 0; i < q; i++)
-        bw.write_bit(0);
+    while (q)
+    {
+        uint32_t chunk = std::min(q, 64u);
+        bw.write(0, chunk);
+        q -= chunk;
+    }
 
     bw.write_bit(1);
 
@@ -958,20 +962,11 @@ size_t FlacEncoder::sum_abs(std::span<const int32_t> in)
 
     return result;
 }
-size_t FlacEncoder::estimate_residual(std::span<const int32_t> in, uint8_t rice_param)
+size_t FlacEncoder::estimate_residual(std::span<const int32_t> in, uint8_t k)
 {
-    size_t bits = 0;
-
+    size_t bits = in.size() * (k + 1);
     for (int32_t v : in)
-    {
-        uint32_t u = zigzag_encode(v);
-
-        uint32_t q = u >> rice_param;
-
-        // unary quotient bits + stop bit + rice remainder
-        bits += q + 1 + rice_param;
-    }
-
+        bits += zigzag_encode(v) >> k;
     return bits;
 }
 size_t FlacEncoder::estimate_encoded(std::span<const int32_t> in, uint8_t bps, PredictorType pred_type, uint8_t pred_order,

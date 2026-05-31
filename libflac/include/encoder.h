@@ -66,8 +66,8 @@ private:
     {
         PredictorType type = PredictorType::Verbatim;
         uint8_t order = 0;
-        uint8_t partition_order = 0;                       
-        std::array<uint8_t, MAX_PARTITIONS> rice_params{}; 
+        uint8_t partition_order = 0;
+        std::array<uint8_t, MAX_PARTITIONS> rice_params{};
         size_t bits = SIZE_MAX;
         std::array<int32_t, MAX_SAMPLES_IN_BLOCK> residual{};
         std::array<int32_t, MAX_LPC_ORDER> qlp{};
@@ -81,6 +81,9 @@ private:
     BitWriter bw;
 
     std::array<std::vector<int32_t>, 8> channels;
+    // Buffers for decorrelated channels (each variant)
+    std::array<std::array<int32_t, MAX_SAMPLES_IN_BLOCK>, static_cast<size_t>(ChannelDecorrelationType::Count)> dec_left;
+    std::array<std::array<int32_t, MAX_SAMPLES_IN_BLOCK>, static_cast<size_t>(ChannelDecorrelationType::Count)> dec_right;
 
     uint64_t frame_number = 0;
 };
