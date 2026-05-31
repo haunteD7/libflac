@@ -3,7 +3,13 @@
 #include <cstdint>
 
 static constexpr uint8_t MAX_CHANNELS = 7;
-static constexpr size_t MAX_SAMPLES_IN_BLOCK = 16384;
+static constexpr uint8_t MAX_PARTITION_ORDER = 4;
+static constexpr uint8_t MAX_PARTITIONS = 1 << MAX_PARTITION_ORDER;
+static constexpr size_t  MAX_SAMPLES_IN_BLOCK = 16384;
+static constexpr uint8_t DEFAULT_QLP_PRECISION = 12;
+static constexpr uint8_t DEFAULT_QLP_SHIFT = 8;
+
+static constexpr uint8_t MAX_LPC_ORDER = 32;
 
 /// @brief Example for 24 bit: 0xFFFFFF -> -1
 static inline int32_t sign_extend(uint64_t value, uint8_t bits)

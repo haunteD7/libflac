@@ -2,83 +2,276 @@
 
 #include <fstream>
 #include <cstring>
+#include <cmath>
+
+FlacEncoder::BestEncoding FlacEncoder::find_best(std::span<const int32_t> samples, uint8_t bps)
+{
+    BestEncoding best;
+
+    const size_t n = samples.size();
+    const uint8_t MAX_ORDER = static_cast<uint8_t>(std::min<size_t>(MAX_LPC_ORDER, n - 1));
+
+    // Helper: counts rice-params by partitions and fills best if better one has been found
+    auto try_predictor = [&](PredictorType type,
+                             uint8_t order,
+                             const std::array<int32_t, MAX_SAMPLES_IN_BLOCK> &residual_buf,
+                             const std::array<int32_t, MAX_LPC_ORDER> &qlp_buf)
+    {
+        uint8_t p_order = MAX_PARTITION_ORDER;
+        /* Lower partition if warmup samples are not fitting in first partition,
+           or if block size is not divisible by partition size */
+        while (p_order > 0 && ((n >> p_order) <= order || (n % (1u << p_order)) != 0))
+            --p_order;
+
+        const size_t num_parts = 1u << p_order;
+        const size_t part_size = n / num_parts;
+
+        std::array<uint8_t, MAX_PARTITIONS> rp{}; // Estimate rice params
+        for (size_t p = 0; p < num_parts; p++)
+        {
+            const size_t warmup_in_part = (p == 0) ? order : 0;
+            const size_t start = p * part_size + warmup_in_part;
+            const size_t count = part_size - warmup_in_part;
+            if (count == 0)
+            {
+                rp[p] = 0;
+                continue;
+            }
+            rp[p] = estimate_rice_param(std::span<const int32_t>(residual_buf.data() + start, count));
+        }
+
+        const size_t bits = estimate_encoded(
+            std::span<const int32_t>(residual_buf.data(), n),
+            bps, type, order, p_order,
+            std::span<const uint8_t>(rp.data(), num_parts));
+
+        if (bits < best.bits)
+        {
+            best.type = type;
+            best.order = order;
+            best.partition_order = p_order;
+            best.bits = bits;
+            best.rice_params = rp;
+            std::copy_n(residual_buf.begin(), n, best.residual.begin());
+            best.qlp = qlp_buf;
+        }
+    };
+
+    // 1. Constant
+    {
+        bool is_constant = true;
+        for (size_t i = 1; i < n; i++)
+        {
+            if (samples[i] != samples[0])
+            {
+                is_constant = false;
+                break;
+            }
+        }
+
+        if (is_constant)
+        {
+            size_t bits = bps;
+            if (bits < best.bits)
+            {
+                best.type = PredictorType::Constant;
+                best.order = 0;
+                best.partition_order = 0;
+                best.bits = bits;
+                best.residual[0] = samples[0];
+            }
+        }
+    }
+
+    // 2. Verbatim
+    {
+        const size_t bits = estimate_encoded(
+            samples, bps, PredictorType::Verbatim, 0, 0, {});
+        if (bits < best.bits)
+        {
+            best.type = PredictorType::Verbatim;
+            best.order = 0;
+            best.partition_order = 0;
+            best.bits = bits;
+            std::copy_n(samples.begin(), n, best.residual.begin());
+        }
+    }
+
+    // 3. Fixed predictor, orders 0..4
+    {
+        std::array<int32_t, MAX_SAMPLES_IN_BLOCK> residual_buf{};
+        std::array<int32_t, MAX_LPC_ORDER> dummy_qlp{};
+
+        for (uint8_t order = 0; order <= 4 && order < n; order++)
+        {
+            encode_fp(samples, residual_buf, order);
+            try_predictor(PredictorType::Fixed, order, residual_buf, dummy_qlp);
+        }
+    }
+
+    // 4. LPC, orders 1..min(MAX_LPC_ORDER, n-1)
+    if (MAX_ORDER >= 1)
+    {
+        // Single autocorrelation for all orders
+        std::array<double, MAX_LPC_ORDER + 1> r{};
+        compute_autocorrelation(samples, r, MAX_ORDER);
+
+        if (r[0] > 0.0)
+        {
+            std::array<double, MAX_LPC_ORDER> lpc_f{};
+            std::array<int32_t, MAX_LPC_ORDER> qlp_buf{};
+            std::array<int32_t, MAX_SAMPLES_IN_BLOCK> residual_buf{};
+
+            for (uint8_t order = 1; order <= MAX_ORDER; order++)
+            {
+                levinson_durbin(
+                    std::span<const double>(r.data(), order + 1),
+                    std::span<double>(lpc_f.data(), order),
+                    order);
+
+                quantize_lpc(
+                    std::span<const double>(lpc_f.data(), order),
+                    std::span<int32_t>(qlp_buf.data(), order),
+                    DEFAULT_QLP_SHIFT);
+
+                encode_lp(samples, residual_buf,
+                          std::span<const int32_t>(qlp_buf.data(), order),
+                          order, DEFAULT_QLP_SHIFT);
+
+                try_predictor(PredictorType::Linear, order, residual_buf, qlp_buf);
+            }
+        }
+    }
+
+    return best;
+}
 
 size_t FlacEncoder::encode(std::filesystem::path path, uint32_t block_size)
 {
+    // Read file
     std::ifstream f(path, std::ios::binary);
     if (!f.is_open())
-    {
         throw std::runtime_error("Can't open file " + path.filename().string() + " for reading");
-        return 0;
-    }
 
-    size_t file_size = std::filesystem::file_size(path);
+    const size_t file_size = std::filesystem::file_size(path);
     std::vector<uint8_t> br_buffer(file_size);
     f.read(reinterpret_cast<char *>(br_buffer.data()), file_size);
     br = BitReader(br_buffer);
 
+    // WAV Header + FLAC
     read_wav_header();
     stream_info.max_block_size = block_size;
-    stream_info.min_block_size = stream_info.total_samples % block_size;
+    size_t tail = stream_info.total_samples % block_size;
+    stream_info.min_block_size =
+        tail == 0 ? block_size : std::min((uint64_t)block_size, tail);
     write_flac_header_and_metadata();
     deinterleave();
 
-    auto bps = stream_info.bits_per_sample;
-    auto num_channels = stream_info.num_channels;
+    const auto bps = stream_info.bits_per_sample;
+    if (stream_info.num_channels > MAX_CHANNELS)
+        throw std::runtime_error("Exceeded max amount of channels");
+    const auto num_channels = stream_info.num_channels;
 
-    uint8_t channels_bps[4][MAX_CHANNELS];
-    std::memset(channels_bps, bps, 4 * MAX_CHANNELS);
+    // BPS for channels for each decorrelation type
+    // Index [decorrelation_type][channel]
+    uint8_t channels_bps[static_cast<size_t>(ChannelDecorrelationType::Count)][MAX_CHANNELS];
+    for (auto &row : channels_bps)
+        std::fill(std::begin(row), std::end(row), bps);
     channels_bps[static_cast<size_t>(ChannelDecorrelationType::LeftSide)][1] = bps + 1;
     channels_bps[static_cast<size_t>(ChannelDecorrelationType::RightSide)][0] = bps + 1;
     channels_bps[static_cast<size_t>(ChannelDecorrelationType::MidSide)][1] = bps + 1;
 
-    size_t pos = 0;
-    std::array<std::span<int32_t>, MAX_CHANNELS> channels_to_write;
-    while (pos < stream_info.total_samples)
+    size_t offset = 0;
+    while (offset < stream_info.total_samples)
     {
-        std::array<std::array<int32_t, MAX_SAMPLES_IN_BLOCK>, static_cast<size_t>(ChannelDecorrelationType::Count)> decorrelated_left;
-        std::array<std::array<int32_t, MAX_SAMPLES_IN_BLOCK>, static_cast<size_t>(ChannelDecorrelationType::Count)> decorrelated_right;
+        const size_t num_samples = std::min(
+            static_cast<uint64_t>(block_size),
+            stream_info.total_samples - offset);
 
-        size_t num_samples_to_encode = std::min(static_cast<uint64_t>(block_size), stream_info.total_samples - pos);
+        // Buffers for decorrelated channels (each variant)
+        std::array<std::array<int32_t, MAX_SAMPLES_IN_BLOCK>,
+                   static_cast<size_t>(ChannelDecorrelationType::Count)>
+            dec_left{};
+        std::array<std::array<int32_t, MAX_SAMPLES_IN_BLOCK>,
+                   static_cast<size_t>(ChannelDecorrelationType::Count)>
+            dec_right{};
 
+        // Source data spans for current block
+        std::span<const int32_t> src_left(channels[0].data() + offset, num_samples);
+        std::span<const int32_t> src_right(num_channels >= 2
+                                               ? channels[1].data() + offset
+                                               : channels[0].data() + offset,
+                                           num_samples);
+
+        // Choosing decorrelation type (only for stereo)
         ChannelDecorrelationType dec_type = ChannelDecorrelationType::Independent;
+
+        // find_best results for both channels of the best variants
+        BestEncoding best_ch[MAX_CHANNELS];
+
         if (num_channels == 2)
         {
-            size_t min_energy;
-            uint8_t test_type = 0;
-            do
-            {
-                ChannelDecorrelationType type = static_cast<ChannelDecorrelationType>(test_type);
-                auto left_channel_part = std::span<int32_t>(channels[0].data() + pos, num_samples_to_encode);
-                auto right_channel_part = std::span<int32_t>(channels[1].data() + pos, num_samples_to_encode);
-                decorrelate(left_channel_part, right_channel_part, decorrelated_left[test_type], decorrelated_right[test_type], type);
-                size_t current_energy = energy(left_channel_part) + energy(right_channel_part);
-                if (min_energy < current_energy)
-                {
-                    min_energy = current_energy;
-                    dec_type = type;
-                }
-                test_type++;
-            } while (test_type < static_cast<uint8_t>(ChannelDecorrelationType::Count));
+            size_t best_total_bits = SIZE_MAX;
 
-            channels_to_write[0] = std::span<int32_t>(decorrelated_left[static_cast<size_t>(dec_type)].data(), num_samples_to_encode);
-            channels_to_write[1] = std::span<int32_t>(decorrelated_right[static_cast<size_t>(dec_type)].data(), num_samples_to_encode);
+            for (uint8_t d = 0;
+                 d < static_cast<uint8_t>(ChannelDecorrelationType::Count); d++)
+            {
+                auto type = static_cast<ChannelDecorrelationType>(d);
+
+                decorrelate(src_left, src_right,
+                            dec_left[d], dec_right[d], type);
+
+                const uint8_t bps_l = channels_bps[d][0];
+                const uint8_t bps_r = channels_bps[d][1];
+
+                BestEncoding enc_l = find_best(std::span<const int32_t>(dec_left[d].data(), num_samples), bps_l);
+                BestEncoding enc_r = find_best(std::span<const int32_t>(dec_right[d].data(), num_samples), bps_r);
+
+                const size_t total = enc_l.bits + enc_r.bits;
+                if (total < best_total_bits)
+                {
+                    best_total_bits = total;
+                    dec_type = type;
+                    best_ch[0] = enc_l;
+                    best_ch[1] = enc_r;
+                }
+            }
         }
-        else
+        else // Independent channels for non-stereo
         {
+            dec_type = ChannelDecorrelationType::Independent;
             for (size_t i = 0; i < num_channels; i++)
-                channels_to_write[i] = std::span<int32_t>(channels[i].data() + pos, num_samples_to_encode);
+            {
+                best_ch[i] = find_best(
+                    std::span<const int32_t>(channels[i].data() + offset, num_samples),
+                    channels_bps[static_cast<size_t>(dec_type)][i]);
+            }
         }
-        write_frame_header(num_samples_to_encode, dec_type);
+
+        // Write frame
+        write_frame_header(num_samples, dec_type);
+
         for (size_t i = 0; i < num_channels; i++)
         {
-            write_subframe_header(PredictorType::Verbatim, 0);
-            write_verbatim(channels_to_write[i], channels_bps[static_cast<size_t>(dec_type)][i]);
+            const BestEncoding &enc = best_ch[i];
+            const uint8_t ch_bps =
+                channels_bps[static_cast<size_t>(dec_type)][i];
+            const size_t np = 1u << enc.partition_order;
+
+            write_subframe_header(enc.type, enc.order);
+            write_encoded(
+                std::span<const int32_t>(enc.residual.data(), num_samples),
+                ch_bps,
+                enc.type,
+                enc.order,
+                enc.partition_order,
+                std::span<const uint8_t>(enc.rice_params.data(), np),
+                std::span<const int32_t>(enc.qlp.data(), enc.order));
         }
 
         bw.align_to_byte();
-        bw.write16_be(0); // TODO: Implement CRC16
-        pos += num_samples_to_encode;
+        bw.write16_be(0); // TODO: CRC16
+        offset += num_samples;
     }
 
     return bw.get_bytes_written();
@@ -87,7 +280,7 @@ void FlacEncoder::read_wav_header()
 {
     // Read WAV header
 
-    // --- RIFF chunk ---
+    // RIFF chunk
     uint32_t riff_id = br.read32_be();
     if (riff_id != 0x52494646u) // "RIFF"
         throw std::runtime_error("Not a RIFF file");
@@ -333,25 +526,6 @@ void FlacEncoder::write_utf8_coded_int(uint64_t num)
         bw.write8(b5);
         bw.write8(b6);
     }
-    else if (num <= 0xFFFFFFFFF) // 7 bytes
-    {
-        // 11111110 ...
-        uint8_t b1 = 0xFE;
-        uint8_t b2 = 0x80 | ((num >> 30) & 0x3F);
-        uint8_t b3 = 0x80 | ((num >> 24) & 0x3F);
-        uint8_t b4 = 0x80 | ((num >> 18) & 0x3F);
-        uint8_t b5 = 0x80 | ((num >> 12) & 0x3F);
-        uint8_t b6 = 0x80 | ((num >> 6) & 0x3F);
-        uint8_t b7 = 0x80 | (num & 0x3F);
-
-        bw.write8(b1);
-        bw.write8(b2);
-        bw.write8(b3);
-        bw.write8(b4);
-        bw.write8(b5);
-        bw.write8(b6);
-        bw.write8(b7);
-    }
     else
     {
         throw std::runtime_error("UTF-8 frame number is too large");
@@ -444,7 +618,55 @@ void FlacEncoder::write_flac_header_and_metadata()
     bw.write64_be(md5[0]);
     bw.write64_be(md5[1]);
 }
-void FlacEncoder::write_verbatim(std::span<int32_t> in, uint8_t bps)
+void FlacEncoder::write_encoded(std::span<const int32_t> in, uint8_t bps, PredictorType pred_type, uint8_t pred_order, uint8_t partition_order,
+                                std::span<const uint8_t> rice_params, std::span<const int32_t> qlp_coeffs)
+{
+
+    if (pred_type == PredictorType::Verbatim)
+    {
+        write_verbatim(in, bps);
+        return;
+    }
+    else if (pred_type == PredictorType::Constant)
+    {
+        bw.write(unsign_extend(in[0], bps), bps);
+        return;
+    }
+
+    size_t num_partitions = 1 << partition_order;
+    uint8_t warmups = pred_order;
+    for (size_t i = 0; i < warmups; i++) // Write warmups
+        bw.write(unsign_extend(in[i], bps), bps);
+
+    size_t num_samples = in.size();
+    size_t num_samples_in_partition = num_samples / num_partitions;
+
+    if (pred_type == PredictorType::Linear) // Header of linear predictor
+    {
+        bw.write(DEFAULT_QLP_PRECISION - 1, 4);
+        bw.write(unsign_extend(DEFAULT_QLP_SHIFT, 5), 5);
+        for (size_t i = 0; i < pred_order; i++) // Write lpc coeffs
+        {
+            bw.write(unsign_extend(qlp_coeffs[i], DEFAULT_QLP_PRECISION), DEFAULT_QLP_PRECISION);
+        }
+    }
+    // Residuals header
+    bw.write(0, 2); // Partitioned Rice code with 4-bit parameters
+    bw.write(partition_order, 4);
+
+    for (size_t part = 0; part < num_partitions; part++)
+    {
+        auto rice_param = rice_params[part];
+        bw.write(rice_param, 4); // Header of partition
+        for (size_t sample_idx = part * num_samples_in_partition + warmups; sample_idx < (part + 1) * num_samples_in_partition; sample_idx++)
+        {
+            write_rice_sample(in[sample_idx], rice_param);
+        }
+
+        warmups = 0;
+    }
+}
+void FlacEncoder::write_verbatim(std::span<const int32_t> in, uint8_t bps)
 {
     for (auto sample : in)
     {
@@ -520,7 +742,7 @@ void FlacEncoder::deinterleave()
         throw std::runtime_error("Unsupported bit depth");
     }
 }
-void FlacEncoder::decorrelate(std::span<int32_t> in_left, std::span<int32_t> in_right, std::span<int32_t> out_left, std::span<int32_t> out_right, ChannelDecorrelationType type)
+void FlacEncoder::decorrelate(std::span<const int32_t> in_left, std::span<const int32_t> in_right, std::span<int32_t> out_left, std::span<int32_t> out_right, ChannelDecorrelationType type)
 {
     switch (type)
     {
@@ -570,11 +792,130 @@ void FlacEncoder::decorrelate(std::span<int32_t> in_left, std::span<int32_t> in_
             int32_t left = in_left[i];
             int32_t right = in_right[i];
 
-            out_left[i] = left - right;
-            out_right[i] = (left + right) >> 1;
+            out_left[i] = (left + right) >> 1;
+            out_right[i] = left - right;
         }
         break;
     }
+    }
+}
+void FlacEncoder::encode_fp(std::span<const int32_t> in, std::span<int32_t> out, uint8_t order)
+{
+    size_t num_samples = in.size();
+
+    size_t i = 0;
+    for (; i < order; i++) // Copy warmup samples
+        out[i] = in[i];
+
+    switch (order)
+    {
+    case 0:
+    {
+        for (; i < num_samples; i++)
+        {
+            out[i] = in[i];
+        }
+        break;
+    }
+    case 1:
+    {
+        for (; i < num_samples; i++)
+        {
+            out[i] = in[i] - in[i - 1];
+        }
+        break;
+    }
+    case 2:
+    {
+        for (; i < num_samples; i++)
+        {
+            out[i] = in[i] - 2 * in[i - 1] + in[i - 2];
+        }
+        break;
+    }
+    case 3:
+    {
+        for (; i < num_samples; i++)
+        {
+            out[i] = in[i] - 3 * in[i - 1] + 3 * in[i - 2] - in[i - 3];
+        }
+        break;
+    }
+    case 4:
+    {
+        for (; i < num_samples; i++)
+        {
+            out[i] = in[i] - 4 * in[i - 1] + 6 * in[i - 2] - 4 * in[i - 3] + in[i - 4];
+        }
+        break;
+    }
+    default:
+        throw std::runtime_error("Invalid fixed predictor order");
+    }
+}
+void FlacEncoder::encode_lp(std::span<const int32_t> in, std::span<int32_t> out, std::span<const int32_t> coeffs, uint8_t order, uint8_t qlp_shift)
+{
+    size_t num_samples = in.size();
+
+    for (size_t i = 0; i < order; i++) // Warmup samples
+        out[i] = in[i];
+
+    for (size_t i = order; i < num_samples; i++)
+    {
+        int64_t predicted = 0;
+        for (size_t k = 0; k < order; k++)
+        {
+            predicted +=
+                static_cast<int64_t>(coeffs[order - 1 - k]) *
+                static_cast<int64_t>(in[i - k - 1]);
+        }
+        predicted >>= qlp_shift;
+        out[i] = in[i] - static_cast<int32_t>(predicted);
+    }
+}
+void FlacEncoder::compute_autocorrelation(std::span<const int32_t> samples, std::span<double> r, uint8_t order)
+{
+    for (size_t lag = 0; lag <= order; lag++)
+    {
+        double sum = 0.0;
+
+        for (size_t i = lag; i < samples.size(); i++)
+            sum += static_cast<double>(samples[i]) * samples[i - lag];
+
+        r[lag] = sum;
+    }
+}
+void FlacEncoder::levinson_durbin(std::span<const double> r, std::span<double> a, uint8_t order)
+{
+    std::array<double, MAX_LPC_ORDER> prev{};
+
+    double error = r[0];
+
+    for (size_t i = 0; i < order; i++)
+    {
+        double lambda = r[i + 1];
+
+        for (size_t j = 0; j < i; j++)
+            lambda -= prev[j] * r[i - j];
+
+        lambda /= error;
+
+        a[i] = lambda;
+
+        for (size_t j = 0; j < i; j++)
+            a[j] = prev[j] - lambda * prev[i - j - 1];
+
+        error *= (1.0 - lambda * lambda);
+
+        for (size_t j = 0; j <= i; j++)
+            prev[j] = a[j];
+    }
+}
+void FlacEncoder::quantize_lpc(std::span<const double> lpc, std::span<int32_t> qlp, uint8_t shift)
+{
+    for (size_t i = 0; i < lpc.size(); i++)
+    {
+        qlp[i] = static_cast<int32_t>(std::round(lpc[i] * (1 << shift)));
     }
 }
 void FlacEncoder::write_rice_sample(int32_t sample, uint8_t k)
@@ -585,12 +926,14 @@ void FlacEncoder::write_rice_sample(int32_t sample, uint8_t k)
     uint32_t r = u & ((1u << k) - 1u);
 
     // unary quotient
-    while (q)
-    {
-        uint32_t chunk = std::min(q, 64u);
-        bw.write(0, chunk);
-        q -= chunk;
-    }
+    // while (q)
+    // {
+    //     uint32_t chunk = std::min(q, 64u);
+    //     bw.write(0, chunk);
+    //     q -= chunk;
+    // }
+    for (uint32_t i = 0; i < q; i++)
+        bw.write_bit(0);
 
     bw.write_bit(1);
 
@@ -598,11 +941,73 @@ void FlacEncoder::write_rice_sample(int32_t sample, uint8_t k)
     if (k != 0)
         bw.write(r, k);
 }
-size_t FlacEncoder::energy(std::span<const int32_t> in)
+uint8_t FlacEncoder::estimate_rice_param(std::span<const int32_t> in)
+{
+    size_t mean = sum_abs(in) / in.size();
+
+    if (mean == 0)
+        return 0;
+    else
+        return static_cast<uint8_t>(std::clamp((int)std::log2(mean), 0, 30));
+}
+size_t FlacEncoder::sum_abs(std::span<const int32_t> in)
 {
     size_t result = 0;
     for (auto sample : in)
         result += std::abs(sample);
+
+    return result;
+}
+size_t FlacEncoder::estimate_residual(std::span<const int32_t> in, uint8_t rice_param)
+{
+    size_t bits = 0;
+
+    for (int32_t v : in)
+    {
+        uint32_t u = zigzag_encode(v);
+
+        uint32_t q = u >> rice_param;
+
+        // unary quotient bits + stop bit + rice remainder
+        bits += q + 1 + rice_param;
+    }
+
+    return bits;
+}
+size_t FlacEncoder::estimate_encoded(std::span<const int32_t> in, uint8_t bps, PredictorType pred_type, uint8_t pred_order,
+                                     uint8_t partition_order, std::span<const uint8_t> rice_params)
+{
+    if (pred_type == PredictorType::Verbatim)
+    {
+        return bps * in.size();
+    }
+    else if (pred_type == PredictorType::Constant)
+    {
+        return bps;
+    }
+
+    size_t num_partitions = 1 << partition_order;
+    uint8_t warmups = pred_order;
+    uint8_t warmup_bits = bps * warmups;
+
+    size_t num_samples = in.size();
+    size_t num_samples_in_partition = num_samples / num_partitions;
+
+    size_t result = 0;
+    for (size_t i = 0; i < num_partitions; i++)
+    {
+        result += estimate_residual(std::span<const int32_t>(in.data() + i * num_samples_in_partition + warmups, num_samples_in_partition - warmups), rice_params[i]);
+
+        warmups = 0;
+    }
+    result += warmup_bits;
+    result += 6;                  // Residuals header
+    result += num_partitions * 4; // Partitions' header
+
+    if (pred_type == PredictorType::Linear)
+    {
+        result += DEFAULT_QLP_PRECISION * pred_order + 9; // linear predictor's header
+    }
 
     return result;
 }
